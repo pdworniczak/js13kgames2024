@@ -34,14 +34,14 @@ class Game {
 
     update = () => {
         for (const gameObject of this.objects) {
-            gameObject.update(this.timePassed);
+            gameObject.update(this);
         }
     }
 
     draw = () => {
         this.context.clearRect(0, 0, 800, 600);
         for (const gameObject of this.objects) {
-            gameObject.draw(this.context, this.timePassed);
+            gameObject.draw(this);
         }
     }
 
@@ -135,7 +135,7 @@ const initControllers = (game) => {
 class Infantry {
     TYPE = OBJECT_TYPE.UNIT;
     SIZE = 60;
-    SPEED = 80;
+    SPEED = 154;
 
     state = OBJECT_STATE.NONE;
     orders = [];
@@ -145,7 +145,15 @@ class Infantry {
         this.COLOR = color ?? 'green';
     }
 
-    update = (timePassed) => {
+    get size() {
+        return SCALE * this.SIZE;
+    }
+
+    get speed() {
+        return SCALE * this.SPEED;
+    }
+
+    update = ({ objects, timePassed }) => {
         const order = this.orders[0];
 
         if (order) {
@@ -153,32 +161,39 @@ class Infantry {
                 const { x: x1, y: y1 } = this.position;
                 const { x: x2, y: y2 } = order.position;
                 const angle =  Math.atan(Math.abs(x1-x2)/Math.abs(y1-y2));
-                const dist = Math.sqrt((x1 -x2) ** 2 + (y1 - y2) ** 2)
-                const currentFrameDisctance = timePassed*(this.SPEED/1000);
+                const distanceToDestination = Math.hypot(x1-x2, y1-y2);
+                const maximalDistanceForCurrentFrame = timePassed*(this.speed/1000);
 
-                if (currentFrameDisctance >= dist) {
-                    this.position = new Position(order.position.x, order.position.y);
-                    this.orders.pop();
-                    console.log(this);
+                if (maximalDistanceForCurrentFrame >= distanceToDestination) {
+                    
+                    if (!this.colision(order.position, objects)) {
+                        this.position = new Position(order.position.x, order.position.y);
+                        this.orders.pop();
+                        console.log(this);
+                    }
+                    
                 } else {
-                    const newX = currentFrameDisctance * Math.sin(angle);
-                    const newY = currentFrameDisctance * Math.cos(angle);
-
-                    this.position = new Position(
-                        x1 > x2 ? this.position.x - newX : this.position.x + newX, 
-                        y1 > y2 ? this.position.y - newY : this.position.y + newY
+                    const x = maximalDistanceForCurrentFrame * Math.sin(angle);
+                    const y = maximalDistanceForCurrentFrame * Math.cos(angle);
+                    const newPosition = new Position(
+                        x1 > x2 ? this.position.x - x : this.position.x + x, 
+                        y1 > y2 ? this.position.y - y : this.position.y + y
                     );
+                    
+                    if (!this.colision(newPosition, objects)) {
+                        this.position = newPosition;
+                    };
                 }
             }
         }
     }
 
 
-    draw = (context, timePassed) => {
+    draw = ({ context, objects }) => {
         const { x, y } = this.position;
         
         context.beginPath();
-        context.strokeStyle = OBJECT_STATE.SELECTED ? 'red' : this.COLOR;
+        context.strokeStyle = this.state === OBJECT_STATE.SELECTED ? 'red' : this.COLOR;
         context.arc(x, y, SCALE * this.SIZE, 0, Math.PI * 2, true);
         context.stroke();
 
@@ -193,10 +208,17 @@ class Infantry {
         }
      }
 
-    //  getDrawOrder = () => {
-    //     const order = this.orders[0];
-    //     return order !== undefined && [ORDER.MOVE, ORDER.ATTACK].includes(order.type) ?? order;
-    //  }
+     colision = (position, objects) => {
+
+        for (const gameObject of objects) {
+            if (this !== gameObject) {
+                if (Math.hypot(position.x-gameObject.position.x, position.y - gameObject.position.y) < this.size + gameObject.size) {
+                    return true;
+                }
+            }
+        }
+        return false;
+     }
 }
 
 class Position {
