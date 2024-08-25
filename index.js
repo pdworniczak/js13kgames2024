@@ -134,7 +134,9 @@ const initControllers = (game) => {
 
 class Infantry {
     TYPE = OBJECT_TYPE.UNIT;
-    SIZE = 60;
+    LINE_WIDTH = 5;
+    RADIUS = 70;
+    SIZE = this.RADIUS + this.LINE_WIDTH * 2;
     SPEED = 154;
 
     state = OBJECT_STATE.NONE;
@@ -193,8 +195,9 @@ class Infantry {
         const { x, y } = this.position;
         
         context.beginPath();
+        context.lineWidth = this.LINE_WIDTH;
         context.strokeStyle = this.state === OBJECT_STATE.SELECTED ? 'red' : this.COLOR;
-        context.arc(x, y, SCALE * this.SIZE, 0, Math.PI * 2, true);
+        context.arc(x, y, SCALE * this.RADIUS, 0, Math.PI * 2, true);
         context.stroke();
 
         const order = this.orders[0];
@@ -202,7 +205,8 @@ class Infantry {
         if (order) {
             context.beginPath();
             context.moveTo(this.position.x, this.position.y);
-            context.strokeStyle = 'blue';
+            context.lineWidth = 2;
+            context.strokeStyle = 'rgb(0 255 0 / 20%)';
             context.lineTo(order.position.x, order.position.y);
             context.stroke();
         }
