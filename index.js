@@ -8,9 +8,15 @@ window.onload = () => {
 const SCALE = 0.2;
 
 class Game {
+    team1 = new Team(1, [], [2]);
+    team2 = new Team(2, [], [1]);
+
     objects = [
-        new Infantry(100, 100),
-        new Infantry(150, 300)
+        new Infantry(400, 100, this.team2),
+        new Infantry(450, 300, this.team2),
+        new Infantry(550, 315, this.team2),
+        new Infantry(120, 450, this.team1),
+        new Infantry(170, 510, this.team1)
     ]
 
     constructor() {
@@ -142,9 +148,10 @@ class Infantry {
     state = OBJECT_STATE.NONE;
     orders = [];
 
-    constructor(x, y, color) {
+    constructor(x, y, team) {
         this.position = new Position(x, y);
-        this.COLOR = color ?? 'green';
+        this.TEAM = team;
+        this.COLOR = COLOR_MAP[team.id];
     }
 
     get size() {
@@ -196,9 +203,16 @@ class Infantry {
         
         context.beginPath();
         context.lineWidth = this.LINE_WIDTH;
-        context.strokeStyle = this.state === OBJECT_STATE.SELECTED ? 'red' : this.COLOR;
+        context.strokeStyle = this.COLOR;
         context.arc(x, y, SCALE * this.RADIUS, 0, Math.PI * 2, true);
         context.stroke();
+
+        if (this.state === OBJECT_STATE.SELECTED) {
+            context.beginPath();
+            context.fillStyle = 'rgb(0 255 0/ 50%)'
+            context.arc(x, y, SCALE * (this.RADIUS + this.LINE_WIDTH), 0, Math.PI * 2, true);
+            context.fill();
+        }
 
         const order = this.orders[0];
 
@@ -223,6 +237,30 @@ class Infantry {
         }
         return false;
      }
+}
+
+class Team {
+    #id;
+    #allies;
+    #enemies;
+
+    constructor(id, alies, enemies) {
+        this.#id = id;
+        this.#allies = alies;
+        this.#enemies = enemies;
+    }
+
+    isHostile = (team) => {
+        return this.#enemies.includes(team.id)
+    }
+
+    isAlly = (team) => {
+        return this.#allies.includes(team.id);
+    }
+
+    get id() {
+        return this.#id;
+    }
 }
 
 class Position {
@@ -261,3 +299,10 @@ class MoveOrder {
         return ORDER.MOVE;
     }
 }
+
+const COLOR_MAP = Object.freeze({
+    '1': 'rgb(56, 152, 255)',
+    '2': 'rgb(255, 0, 67)',
+    '3': 'rgb(75, 214, 72)',
+    '4': 'rgb(226, 218, 63)'
+})
