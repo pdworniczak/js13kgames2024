@@ -1,7 +1,7 @@
 import { SCALE } from "./consts";
-import { OBJECT_STATE, OBJECT_TYPE } from "./objects";
+import { OBJECT_STATE, OBJECT_TYPE } from "./units/index.js";
 import { MoveOrder } from "./orders";
-import { Point } from "./subjects";
+import { Point } from "./utils.js";
 
 export const initControllers = (game) => {
     document.addEventListener('keydown', e => {
@@ -43,7 +43,7 @@ export const initControllers = (game) => {
         // }
 
         const selectedGameObject = game
-            .objects
+            .units
             .filter((gameObject) => gameObject.TYPE === OBJECT_TYPE.UNIT)
             .map((gameObject) => { gameObject.state = OBJECT_STATE.NONE; return gameObject })
             .find((gameObject) => {
@@ -58,14 +58,14 @@ export const initControllers = (game) => {
     }
 
     const actionEvent = (clickPosition) => {
-        const selectedObjects = getSelectedObjects();
+        const selectedUnits = getSelectedUnits();
 
-        for (const gameObject of selectedObjects) {
-            gameObject.orders[0] = new MoveOrder(clickPosition);
+        for (const unit of selectedUnits) {
+            unit.orders[0] = new MoveOrder(clickPosition);
         }
     }
 
-    const getSelectedObjects = () => {
-        return game.objects.filter(gameObject => gameObject.state === OBJECT_STATE.SELECTED);
+    const getSelectedUnits = () => {
+        return game.units.filter(gameObject => gameObject.state === OBJECT_STATE.SELECTED);
     }
 }

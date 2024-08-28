@@ -1,20 +1,14 @@
 export class Team {
     #id;
-    #allies;
     #enemies;
 
-    constructor(id, alies, enemies) {
+    constructor(id, enemies) {
         this.#id = id;
-        this.#allies = alies;
         this.#enemies = enemies;
     }
 
     isHostile = (team) => {
         return this.#enemies.includes(team.id)
-    }
-
-    isAlly = (team) => {
-        return this.#allies.includes(team.id);
     }
 
     get id() {

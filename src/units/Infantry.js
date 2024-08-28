@@ -1,17 +1,17 @@
 import { SCALE } from "../consts";
 import { ORDER } from "../orders";
-import { Point } from "../subjects";
-import { OBJECT_STATE, OBJECT_TYPE } from "./consts";
+import { Point } from "../utils";
+import { UNIT_STATE, UNIT_TYPE } from "./consts";
 
 export class Infantry {
-    TYPE = OBJECT_TYPE.UNIT;
+    TYPE = UNIT_TYPE.UNIT;
     LINE_WIDTH = 5;
     RADIUS = 70;
     SIZE = this.RADIUS + this.LINE_WIDTH * 2;
     SPEED = 154;
     TURN_SPEED = 2;
 
-    state = OBJECT_STATE.NONE;
+    state = UNIT_STATE.NONE;
     orders = [];
     direction = 0;
 
@@ -29,7 +29,7 @@ export class Infantry {
         return SCALE * this.SPEED;
     }
 
-    update = ({ objects, timePassed }) => {
+    update = ({ units, timePassed }) => {
         const order = this.orders[0];
 
         if (order) {
@@ -52,7 +52,7 @@ export class Infantry {
 
                 if (maximalDistanceForCurrentFrame >= distanceToDestination) {
                     
-                    if (!this.colision(order.position, objects)) {
+                    if (!this.colision(units, order.position)) {
                         this.position = new Point(order.position.x, order.position.y);
                         this.orders.pop();
                         console.log(this);
@@ -66,7 +66,7 @@ export class Infantry {
                         y1 > y2 ? this.position.y - y : this.position.y + y
                     );
                     
-                    if (!this.colision(newPosition, objects)) {
+                    if (!this.colision(units, newPosition)) {
                         this.position = newPosition;
                     };
                 }
@@ -75,7 +75,7 @@ export class Infantry {
     }
 
 
-    draw = ({ context, objects }) => {
+    draw = ({ units, context }) => {
         const { x, y } = this.position;
         
         context.beginPath();
@@ -96,7 +96,7 @@ export class Infantry {
         context.stroke();
         // end front
 
-        if (this.state === OBJECT_STATE.SELECTED) {
+        if (this.state === UNIT_STATE.SELECTED) {
             context.beginPath();
             context.fillStyle = 'rgb(0 255 0/ 50%)'
             context.arc(x, y, SCALE * (this.RADIUS + this.LINE_WIDTH), 0, Math.PI * 2, true);
@@ -115,11 +115,11 @@ export class Infantry {
         }
      }
 
-     colision = (position, objects) => {
+     colision = (units, position) => {
 
-        for (const gameObject of objects) {
-            if (this !== gameObject) {
-                if (Math.hypot(position.x-gameObject.position.x, position.y - gameObject.position.y) < this.size + gameObject.size) {
+        for (const unit of units) {
+            if (this !== unit) {
+                if (Math.hypot(position.x-unit.position.x, position.y - unit.position.y) < this.size + unit.size) {
                     return true;
                 }
             }

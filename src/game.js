@@ -1,11 +1,11 @@
-import { Infantry, OBJECT_STATE } from "./objects";
-import { Team } from "./subjects";
+import { Infantry, OBJECT_STATE } from "./units/index.js";
+import { Team } from "./units/utils.js";
 
 export class Game {
-    team1 = new Team(1, [], [2]);
-    team2 = new Team(2, [], [1]);
+    team1 = new Team(1, [2]);
+    team2 = new Team(2, [1]);
 
-    objects = [
+    units = [
         new Infantry(400, 100, this.team2),
         new Infantry(450, 300, this.team2),
         new Infantry(550, 315, this.team2),
@@ -23,24 +23,24 @@ export class Game {
     }
 
     run = (currentTimeStamp) => {
+        this.previousTimeStamp = this.currentTimeStamp;
         this.currentTimeStamp = currentTimeStamp;
         this.updateUi();
         this.update();
         this.draw();
 
-        this.previousTimeStamp = currentTimeStamp;
         this.currentFrame = window.requestAnimationFrame(this.run)
     }
 
     update = () => {
-        for (const gameObject of this.objects) {
+        for (const gameObject of this.units) {
             gameObject.update(this);
         }
     }
 
     draw = () => {
         this.context.clearRect(0, 0, 800, 600);
-        for (const gameObject of this.objects) {
+        for (const gameObject of this.units) {
             gameObject.draw(this);
         }
     }
@@ -51,7 +51,7 @@ export class Game {
         document.getElementById('frameRate').innerHTML = frameRate.toFixed(0);
         document.getElementById('selected').innerHTML = '*';
 
-        for (const gameObject of this.objects) {
+        for (const gameObject of this.units) {
             if (gameObject.state === OBJECT_STATE.SELECTED) {
                 document.getElementById('selected').innerHTML = JSON.stringify(gameObject);
             }
