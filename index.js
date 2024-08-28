@@ -85,7 +85,7 @@ const initControllers = (game) => {
         const relX = e.clientX - gameRect.x; //mouse x relative to game container
         const relY = e.clientY - gameRect.y; //mouse y relative to game container
 
-        const clickPosition = new Position(relX <= 800 && relX >= 0 ? relX : -1, relY <= 600 && relY >= 0 ? relY: -1);
+        const clickPosition = new Point(relX <= 800 && relX >= 0 ? relX : -1, relY <= 600 && relY >= 0 ? relY: -1);
 
         if (clickPosition.isValid()) {
             if (e.buttons === 1) {
@@ -144,12 +144,14 @@ class Infantry {
     RADIUS = 70;
     SIZE = this.RADIUS + this.LINE_WIDTH * 2;
     SPEED = 154;
+    TURN_SPEED = 2;
 
     state = OBJECT_STATE.NONE;
     orders = [];
+    direction = 0;
 
     constructor(x, y, team) {
-        this.position = new Position(x, y);
+        this.position = new Point(x, y);
         this.TEAM = team;
         this.COLOR = COLOR_MAP[team.id];
     }
@@ -169,14 +171,24 @@ class Infantry {
             if (order.type === ORDER.MOVE) {
                 const { x: x1, y: y1 } = this.position;
                 const { x: x2, y: y2 } = order.position;
-                const angle =  Math.atan(Math.abs(x1-x2)/Math.abs(y1-y2));
+                const angle = Math.atan(Math.abs(x1-x2)/Math.abs(y1-y2));
                 const distanceToDestination = Math.hypot(x1-x2, y1-y2);
                 const maximalDistanceForCurrentFrame = timePassed*(this.speed/1000);
+
+                this.direction = angle;
+
+                if (x2>x1 && y2>y1) {
+                    this.direction = Math.PI - angle;
+                } else if (x1>x2 && y2>y1) {
+                    this.direction = Math.PI + angle;
+                } else if (x1>x2 && y1>y2) {
+                    this.direction = 2*Math.PI - angle;
+                }
 
                 if (maximalDistanceForCurrentFrame >= distanceToDestination) {
                     
                     if (!this.colision(order.position, objects)) {
-                        this.position = new Position(order.position.x, order.position.y);
+                        this.position = new Point(order.position.x, order.position.y);
                         this.orders.pop();
                         console.log(this);
                     }
@@ -184,7 +196,7 @@ class Infantry {
                 } else {
                     const x = maximalDistanceForCurrentFrame * Math.sin(angle);
                     const y = maximalDistanceForCurrentFrame * Math.cos(angle);
-                    const newPosition = new Position(
+                    const newPosition = new Point(
                         x1 > x2 ? this.position.x - x : this.position.x + x, 
                         y1 > y2 ? this.position.y - y : this.position.y + y
                     );
@@ -206,6 +218,18 @@ class Infantry {
         context.strokeStyle = this.COLOR;
         context.arc(x, y, SCALE * this.RADIUS, 0, Math.PI * 2, true);
         context.stroke();
+
+        // front
+        const startPoint = new Point(x + this.size, y).rotate(this.direction, this.position)
+        const endPoint = new Point(x + this.size, y - 2 * 15).rotate(this.direction, this.position)
+
+        context.beginPath();
+        context.moveTo(startPoint.x, startPoint.y);
+        context.strokeStyle = 'black';
+        context.lineWidth = this.LINE_WIDTH;
+        context.lineTo(endPoint.x, endPoint.y);
+        context.stroke();
+        // end front
 
         if (this.state === OBJECT_STATE.SELECTED) {
             context.beginPath();
@@ -263,7 +287,7 @@ class Team {
     }
 }
 
-class Position {
+class Point {
     constructor(x, y) {
         this.x = x;
         this.y = y;
@@ -271,6 +295,16 @@ class Position {
 
     isValid = () => {
         return this.x >= 0 && this.y >= 0;
+    }
+
+    rotate = (angle, centerPoint) => {
+        const xC = this.x - centerPoint.x;
+        const yC = this.y - centerPoint.y;
+
+        const x = xC * Math.cos(angle) - yC * Math.sin(angle) + centerPoint.x;
+        const y = yC * Math.cos(angle) + xC * Math.sin(angle) + centerPoint.y;
+
+        return new Point(x, y)
     }
 }
 
