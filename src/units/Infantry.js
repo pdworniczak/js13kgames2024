@@ -34,48 +34,58 @@ export class Infantry {
 
         if (order) {
             if (order.type === ORDER.MOVE) {
-                const { x: x1, y: y1 } = this.position;
-                const { x: x2, y: y2 } = order.position;
-                const angle = Math.atan(Math.abs(x1-x2)/Math.abs(y1-y2));
-                const distanceToDestination = Math.hypot(x1-x2, y1-y2);
-                const maximalDistanceForCurrentFrame = timePassed*(this.speed/1000);
+                const { x: posX, y: posY } = this.position;
+                const { x: ordX, y: ordY } = order.position;
+                const angle = Math.atan(Math.abs(posX-ordX)/Math.abs(posY-ordY));
 
-                this.direction = angle;
-
-                if (x2>x1 && y2>y1) {
-                    this.direction = Math.PI - angle;
-                } else if (x1>x2 && y2>y1) {
-                    this.direction = Math.PI + angle;
-                } else if (x1>x2 && y1>y2) {
-                    this.direction = 2*Math.PI - angle;
-                }
-
-                if (maximalDistanceForCurrentFrame >= distanceToDestination) {
-                    
-                    if (!this.colision(units, order.position)) {
-                        this.position = new Point(order.position.x, order.position.y);
-                        this.orders.pop();
-                        console.log(this);
-                    }
-                    
-                } else {
-                    const x = maximalDistanceForCurrentFrame * Math.sin(angle);
-                    const y = maximalDistanceForCurrentFrame * Math.cos(angle);
-                    const newPosition = new Point(
-                        x1 > x2 ? this.position.x - x : this.position.x + x, 
-                        y1 > y2 ? this.position.y - y : this.position.y + y
-                    );
-                    
-                    if (!this.colision(units, newPosition)) {
-                        this.position = newPosition;
-                    };
-                }
+                this.setDirection(angle, this.position, order.position);
+                this.setNewPosition(angle, units, timePassed);
             }
         }
     }
 
+    setNewPosition = (angle, units, timePassed) => {
+        const { x, y } = this.position;
+        const destPos = this.orders[0].position;
 
-    draw = ({ units, context }) => {
+        const distanceToDestination = Math.hypot(x - destPos.x, y - destPos.y);
+        const maximalDistanceForCurrentFrame = timePassed*(this.speed/1000);
+
+        if (maximalDistanceForCurrentFrame >= distanceToDestination) {
+                    
+            if (!this.colision(units, destPos)) {
+                this.position = Object.assign({}, destPos);
+                this.orders.pop();
+                console.log(this);
+            }
+            
+        } else {
+            const newX = maximalDistanceForCurrentFrame * Math.sin(angle);
+            const newY = maximalDistanceForCurrentFrame * Math.cos(angle);
+            const newPosition = new Point(
+                x > destPos.x ? x - newX : x + newX, 
+                y > destPos.y ? y - newY : y + newY
+            );
+            
+            if (!this.colision(units, newPosition)) {
+                this.position = newPosition;
+            };
+        }
+    }
+
+    setDirection = (angle, startPosition, endPosition) => {
+        this.direction = angle;
+
+        if (endPosition.x>startPosition.x && endPosition.y>startPosition.y) {
+            this.direction = Math.PI - angle;
+        } else if (startPosition.x>endPosition.x && endPosition.y>startPosition.y) {
+            this.direction = Math.PI + angle;
+        } else if (startPosition.x>endPosition.x && startPosition.y>endPosition.y) {
+            this.direction = 2*Math.PI - angle;
+        }
+    }
+
+    draw = ({ context }) => {
         const { x, y } = this.position;
         
         context.beginPath();
@@ -84,7 +94,7 @@ export class Infantry {
         context.arc(x, y, SCALE * this.RADIUS, 0, Math.PI * 2, true);
         context.stroke();
 
-        // front
+        // weapon
         const startPoint = new Point(x + this.size, y).rotate(this.direction, this.position)
         const endPoint = new Point(x + this.size, y - 2 * 15).rotate(this.direction, this.position)
 
