@@ -17,4 +17,8 @@ export class Point {
 
         return new Point(x, y)
     }
+
+    distance = (point) => {
+        return Math.hypot(this.x - point.x, this.y - point.y);
+    }
 }

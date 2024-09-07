@@ -1,17 +1,19 @@
 import { Infantry, OBJECT_STATE } from "./units/index.js";
-import { Team } from "./units/utils.js";
+import { Relation, Team } from "./units/utils.js";
 
 export class Game {
     team1 = new Team(1, [2]);
     team2 = new Team(2, [1]);
 
     units = [
-        new Infantry(400, 100, this.team2),
-        new Infantry(450, 300, this.team2),
+        // new Infantry(400, 100, this.team2),
         new Infantry(550, 315, this.team2),
-        new Infantry(120, 450, this.team1),
-        new Infantry(170, 510, this.team1)
+        new Infantry(450, 300, this.team1),
+        // new Infantry(120, 450, this.team1),
+        // new Infantry(170, 510, this.team1)
     ]
+
+    relations = {}
 
     constructor(canvasId) {
         const container = document.getElementById(canvasId);
@@ -22,10 +24,15 @@ export class Game {
         this.currentTimeStamp = 0;
     }
 
+    get timePassed() {
+        return this.currentTimeStamp - this.previousTimeStamp;
+    }
+
     run = (currentTimeStamp) => {
         this.previousTimeStamp = this.currentTimeStamp;
         this.currentTimeStamp = currentTimeStamp;
         this.updateUi();
+        this.calculateUnitsRelations();
         this.update();
         this.draw();
 
@@ -53,13 +60,26 @@ export class Game {
 
         for (const gameObject of this.units) {
             if (gameObject.state === OBJECT_STATE.SELECTED) {
-                document.getElementById('selected').innerHTML = JSON.stringify(gameObject);
+                document.getElementById('selected').innerHTML = `${JSON.stringify(gameObject)}`;
             }
         }
     }
 
-    get timePassed() {
-        return this.currentTimeStamp - this.previousTimeStamp;
-    }
+    calculateUnitsRelations = () => {
+        this.relations = {};
+        for (const unit1 of this.units) {
+            for (const unit2 of this.units) {
+                if (unit1 !== unit2 && this.relations[`${unit1.id}::${unit2.id}`] === undefined) {
+                    const relation = new Relation(unit1, unit2)
+                    relation.distance = unit1.distanceTo(unit2.position);
 
+
+
+                    this.relations[`${unit1.id}::${unit2.id}`] = relation;
+                    this.relations[`${unit2.id}::${unit1.id}`] = relation;
+                }
+            }
+        }
+    }
 }
+

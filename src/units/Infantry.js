@@ -4,6 +4,8 @@ import { Point } from "../utils";
 import { UNIT_STATE, UNIT_TYPE } from "./consts";
 
 export class Infantry {
+    static id = 0;
+
     TYPE = UNIT_TYPE.UNIT;
     LINE_WIDTH = 5;
     RADIUS = 70;
@@ -16,6 +18,7 @@ export class Infantry {
     direction = 0;
 
     constructor(x, y, team) {
+        this.id = ++this.constructor.id;
         this.position = new Point(x, y);
         this.TEAM = team;
         this.COLOR = team.color;
@@ -29,7 +32,7 @@ export class Infantry {
         return SCALE * this.SPEED;
     }
 
-    update = ({ units, timePassed }) => {
+    update = ({ relations, timePassed }) => {
         const order = this.orders[0];
 
         if (order) {
@@ -39,21 +42,21 @@ export class Infantry {
                 const angle = Math.atan(Math.abs(posX-ordX)/Math.abs(posY-ordY));
 
                 this.setDirection(angle, this.position, order.position);
-                this.setNewPosition(angle, units, timePassed);
+                this.setNewPosition(angle, relations, timePassed);
             }
         }
     }
 
-    setNewPosition = (angle, units, timePassed) => {
+    setNewPosition = (angle, relations, timePassed) => {
         const { x, y } = this.position;
         const destPos = this.orders[0].position;
 
-        const distanceToDestination = Math.hypot(x - destPos.x, y - destPos.y);
+        const distanceToDestination = this.distanceTo(destPos);
         const maximalDistanceForCurrentFrame = timePassed*(this.speed/1000);
 
         if (maximalDistanceForCurrentFrame >= distanceToDestination) {
                     
-            if (!this.colision(units, destPos)) {
+            if (!this.colision(relations, destPos)) {
                 this.position = Object.assign({}, destPos);
                 this.orders.pop();
                 console.log(this);
@@ -67,7 +70,7 @@ export class Infantry {
                 y > destPos.y ? y - newY : y + newY
             );
             
-            if (!this.colision(units, newPosition)) {
+            if (!this.colision(relations, newPosition)) {
                 this.position = newPosition;
             };
         }
@@ -123,17 +126,25 @@ export class Infantry {
             context.lineTo(order.position.x, order.position.y);
             context.stroke();
         }
-     }
+    }
 
-     colision = (units, position) => {
+    colision = (relations, newPosition) => {
+        const nearbyRelations = Object.entries(relations)
+            .filter(([key, { distance, units }]) => {
+                return key.startsWith(this.id) && distance < this.size + units[1].size + 10;
+            })
+            .map(([key, relation]) => relation)
 
-        for (const unit of units) {
-            if (this !== unit) {
-                if (Math.hypot(position.x-unit.position.x, position.y - unit.position.y) < this.size + unit.size) {
-                    return true;
-                }
-            }
-        }
-        return false;
-     }
+        const colision = nearbyRelations.flatMap(relation => relation.units)
+            .filter(unit => this !== unit)
+            .some(unit => newPosition.distance(unit.position) < this.size + unit.size);
+
+        console.log(nearbyRelations, colision);
+
+        return colision
+    }
+
+    distanceTo = (destPos) => {
+        return this.position.distance(destPos);
+    }
 }
