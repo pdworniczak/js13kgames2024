@@ -1,11 +1,22 @@
 export class MoveOrder {
+
+    type = ORDER.MOVE;
     
     constructor(position) {
         this.position = position;
     }
+}
+
+export class AttackOrder {
+
+    type = ORDER.ATTACK;
     
-    get type() {
-        return ORDER.MOVE;
+    constructor(unit) {
+        this.unit = unit;
+    }
+
+    get position() {
+        return this.unit.position;
     }
 }
 

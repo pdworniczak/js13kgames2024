@@ -6,11 +6,11 @@ export class Game {
     team2 = new Team(2, [1]);
 
     units = [
-        // new Infantry(400, 100, this.team2),
+        new Infantry(400, 100, this.team2),
         new Infantry(550, 315, this.team2),
         new Infantry(450, 300, this.team1),
-        // new Infantry(120, 450, this.team1),
-        // new Infantry(170, 510, this.team1)
+        new Infantry(120, 450, this.team1),
+        new Infantry(170, 510, this.team1)
     ]
 
     relations = {}

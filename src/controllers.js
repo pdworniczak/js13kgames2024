@@ -1,6 +1,6 @@
 import { SCALE } from "./consts";
 import { OBJECT_STATE, OBJECT_TYPE } from "./units/index.js";
-import { MoveOrder } from "./orders";
+import { AttackOrder, MoveOrder } from "./orders";
 import { Point } from "./utils.js";
 
 export const initControllers = (game) => {
@@ -22,7 +22,7 @@ export const initControllers = (game) => {
 
         if (clickPosition.isValid()) {
             if (e.buttons === 1) {
-                selectEvent(clickPosition)
+                selectEvent(clickPosition);
             }
     
             if (e.buttons === 2) {
@@ -32,16 +32,6 @@ export const initControllers = (game) => {
     })
 
     const selectEvent = (clickPosition) => {   
-        // for (const gameObject of game.objects) {
-        //     if (gameObject.TYPE === OBJECT_TYPE.UNIT) {
-        //         const distansToObjectCenter = Math.sqrt(Math.pow(gameObject.position.x - clickPosition.x, 2) + Math.pow(gameObject.position.y - clickPosition.y, 2));
-        //         const isObjectClicked = SCALE * gameObject.SIZE >= distansToObjectCenter;
-        //         if (isObjectClicked) {
-        //             gameObject.state = OBJECT_STATE.SELECTED;
-        //         }
-        //     }
-        // }
-
         const selectedGameObject = game
             .units
             .filter((gameObject) => gameObject.TYPE === OBJECT_TYPE.UNIT)
@@ -60,8 +50,17 @@ export const initControllers = (game) => {
     const actionEvent = (clickPosition) => {
         const selectedUnits = getSelectedUnits();
 
+        const unitClicked = game.units.find(unit => Math.abs(unit.position.x - clickPosition.x) <= unit.size && Math.abs(unit.position.y - clickPosition.y) <= unit.size);
+
         for (const unit of selectedUnits) {
-            unit.orders[0] = new MoveOrder(clickPosition);
+            if (unitClicked) {
+                if (unit.team.isHostile(unitClicked.team)) {
+                    console.log('ATTACK!!!');
+                    unit.orders[0] = new AttackOrder(unitClicked);
+                }
+            } else {
+                unit.orders[0] = new MoveOrder(clickPosition);
+            }
         }
     }
 

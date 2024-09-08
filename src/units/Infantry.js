@@ -20,8 +20,8 @@ export class Infantry {
     constructor(x, y, team) {
         this.id = ++this.constructor.id;
         this.position = new Point(x, y);
-        this.TEAM = team;
-        this.COLOR = team.color;
+        this.team = team;
+        this.color = team.color;
     }
 
     get size() {
@@ -37,6 +37,15 @@ export class Infantry {
 
         if (order) {
             if (order.type === ORDER.MOVE) {
+                const { x: posX, y: posY } = this.position;
+                const { x: ordX, y: ordY } = order.position;
+                const angle = Math.atan(Math.abs(posX-ordX)/Math.abs(posY-ordY));
+
+                this.setDirection(angle, this.position, order.position);
+                this.setNewPosition(angle, relations, timePassed);
+            }
+
+            if (order.type === ORDER.ATTACK) {
                 const { x: posX, y: posY } = this.position;
                 const { x: ordX, y: ordY } = order.position;
                 const angle = Math.atan(Math.abs(posX-ordX)/Math.abs(posY-ordY));
@@ -93,7 +102,7 @@ export class Infantry {
         
         context.beginPath();
         context.lineWidth = this.LINE_WIDTH;
-        context.strokeStyle = this.COLOR;
+        context.strokeStyle = this.color;
         context.arc(x, y, SCALE * this.RADIUS, 0, Math.PI * 2, true);
         context.stroke();
 
@@ -138,8 +147,6 @@ export class Infantry {
         const colision = nearbyRelations.flatMap(relation => relation.units)
             .filter(unit => this !== unit)
             .some(unit => newPosition.distance(unit.position) < this.size + unit.size);
-
-        console.log(nearbyRelations, colision);
 
         return colision
     }
