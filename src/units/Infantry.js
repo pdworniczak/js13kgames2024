@@ -1,7 +1,7 @@
 import { SCALE } from "../consts";
-import { ORDER } from "../orders";
+import { ORDER, ORDER_COLOR } from "../orders";
 import { Point } from "../utils";
-import { UNIT_STATE, UNIT_TYPE } from "./consts";
+import { UNIT_ACTION, UNIT_STATE, UNIT_TYPE } from "./consts";
 
 export class Infantry {
     static id = 0;
@@ -13,8 +13,12 @@ export class Infantry {
     SPEED = 154;
     TURN_SPEED = 2;
 
+    weapon = new Sword();
+
     state = UNIT_STATE.NONE;
+    action = UNIT_ACTION.STANDING;
     orders = [];
+    animations = [];
     direction = 0;
 
     constructor(x, y, team) {
@@ -33,9 +37,17 @@ export class Infantry {
     }
 
     update = ({ relations, timePassed }) => {
+        const animation = this.animations[0];
         const order = this.orders[0];
 
-        if (order) {
+        if (animation) {
+            animation.timePassed += timePassed;
+            console.log(animation.constructor.name);
+            if (animation.isFinished()) {
+                animation.pop();
+                console.log("HIT");
+            }
+        } else if (order) {
             if (order.type === ORDER.MOVE) {
                 const { x: posX, y: posY } = this.position;
                 const { x: ordX, y: ordY } = order.position;
@@ -43,6 +55,7 @@ export class Infantry {
 
                 this.setDirection(angle, this.position, order.position);
                 this.setNewPosition(angle, relations, timePassed);
+                this.action = UNIT_ACTION.MOVING;
             }
 
             if (order.type === ORDER.ATTACK) {
@@ -58,7 +71,8 @@ export class Infantry {
 
     setNewPosition = (angle, relations, timePassed) => {
         const { x, y } = this.position;
-        const destPos = this.orders[0].position;
+        const order = this.orders[0];
+        const destPos = order.position;
 
         const distanceToDestination = this.distanceTo(destPos);
         const maximalDistanceForCurrentFrame = timePassed*(this.speed/1000);
@@ -68,6 +82,7 @@ export class Infantry {
             if (!this.colision(relations, destPos)) {
                 this.position = Object.assign({}, destPos);
                 this.orders.pop();
+                this.action = UNIT_ACTION.STANDING;
                 console.log(this);
             }
             
@@ -81,8 +96,17 @@ export class Infantry {
             
             if (!this.colision(relations, newPosition)) {
                 this.position = newPosition;
-            };
+            }
         }
+
+        if (order.type === ORDER.ATTACK) {
+            const units = this.getNearbyUnits(relations, this.weapon.range);
+
+            if (units.includes(order.unit)) {
+                this.action = UNIT_ACTION.ATTACKING;
+                this.animations.push(new AttackAnimation(this.weapon, order.unit));
+            }
+        };
     }
 
     setDirection = (angle, startPosition, endPosition) => {
@@ -108,7 +132,7 @@ export class Infantry {
 
         // weapon
         const startPoint = new Point(x + this.size, y).rotate(this.direction, this.position)
-        const endPoint = new Point(x + this.size, y - 2 * 15).rotate(this.direction, this.position)
+        const endPoint = new Point(x + this.size, y - this.weapon.range).rotate(this.direction, this.position)
 
         context.beginPath();
         context.moveTo(startPoint.x, startPoint.y);
@@ -131,27 +155,61 @@ export class Infantry {
             context.beginPath();
             context.moveTo(this.position.x, this.position.y);
             context.lineWidth = 2;
-            context.strokeStyle = 'rgb(0 255 0 / 20%)';
+            context.strokeStyle = ORDER_COLOR[order.type];
             context.lineTo(order.position.x, order.position.y);
             context.stroke();
         }
     }
 
     colision = (relations, newPosition) => {
-        const nearbyRelations = Object.entries(relations)
-            .filter(([key, { distance, units }]) => {
-                return key.startsWith(this.id) && distance < this.size + units[1].size + 10;
-            })
-            .map(([key, relation]) => relation)
+        const nearbyUnits = this.getNearbyUnits(relations, 10);
 
-        const colision = nearbyRelations.flatMap(relation => relation.units)
-            .filter(unit => this !== unit)
-            .some(unit => newPosition.distance(unit.position) < this.size + unit.size);
+        return nearbyUnits.some(unit => newPosition.distance(unit.position) < this.size + unit.size);
+    }
 
-        return colision
+    getNearbyUnits = (relations, expectedDistance) => {
+        return Object.entries(relations)
+        .filter(([key, { distance, units }]) => {
+            return key.startsWith(this.id) && distance < this.size + units[1].size + expectedDistance;
+        })
+        .map(([key, relation]) => relation)
+        .flatMap(relation => relation.units)
+        .filter(unit => this !== unit)
     }
 
     distanceTo = (destPos) => {
         return this.position.distance(destPos);
     }
+}
+class Sword {
+    SPEED = 2500;
+    RANGE = 120;
+    
+    constructor() {
+    }
+
+    get range() {
+        return SCALE * this.RANGE;
+    }
+}
+
+class AttackAnimation {
+    #weapon;
+    #target;
+    #timePassed;
+
+    constructor(weapon, target, callback) {
+        this.#weapon = weapon;
+        this.#target = target;
+        this.#timePassed = 0;
+    }
+
+    set timePassed(duration) {
+        this.#timePassed += duration;
+    }
+
+    isFinished = () => {
+        return this.#weapon.SPEED/1000 <= this.#timePassed;
+    }
+
 }

@@ -24,3 +24,8 @@ export const ORDER = Object.freeze({
     MOVE: "MOVE",
     ATTACK: "ATTACK"
 })
+
+export const ORDER_COLOR = Object.freeze({
+    MOVE: 'rgb(0 255 0 / 20%)',
+    ATTACK: 'rgb(255 0 0 / 20%)',
+})

@@ -60,7 +60,7 @@ export class Game {
 
         for (const gameObject of this.units) {
             if (gameObject.state === OBJECT_STATE.SELECTED) {
-                document.getElementById('selected').innerHTML = `${JSON.stringify(gameObject)}`;
+                // document.getElementById('selected').innerHTML = `${JSON.stringify(gameObject)}`;
             }
         }
     }

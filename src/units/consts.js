@@ -4,5 +4,11 @@ export const UNIT_TYPE = Object.freeze({
 
 export const UNIT_STATE = Object.freeze({
     NONE: "NONE",
-    SELECTED: "SELECTED"
+    SELECTED: "SELECTED",
+})
+
+export const UNIT_ACTION = Object.freeze({
+    STANDING: "STANDING",
+    MOVING: "MOVING",
+    ATTACKING: "ATTACKING",
 })
