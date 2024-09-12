@@ -28,6 +28,11 @@ export class Game {
         return this.currentTimeStamp - this.previousTimeStamp;
     }
 
+    get frameRate() { 
+        return 1000/this.timePassed 
+    };
+    
+
     run = (currentTimeStamp) => {
         this.previousTimeStamp = this.currentTimeStamp;
         this.currentTimeStamp = currentTimeStamp;
@@ -52,10 +57,8 @@ export class Game {
         }
     }
 
-    updateUi = (currentTimeStamp) => {
-        const frameRate = 1000/this.timePassed;
-
-        document.getElementById('frameRate').innerHTML = frameRate.toFixed(0);
+    updateUi = () => {
+        document.getElementById('frameRate').innerHTML = this.frameRate.toFixed(0);
         document.getElementById('selected').innerHTML = '*';
 
         for (const gameObject of this.units) {

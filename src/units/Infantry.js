@@ -36,15 +36,16 @@ export class Infantry {
         return SCALE * this.SPEED;
     }
 
-    update = ({ relations, timePassed }) => {
+    update = (game) => {
+        const { relations, timePassed } = game;
         const animation = this.animations[0];
         const order = this.orders[0];
 
         if (animation) {
             animation.timePassed += timePassed;
-            console.log(animation.constructor.name);
             if (animation.isFinished()) {
-                animation.pop();
+                this.animations.pop();
+                console.log(animation.constructor.name);
                 console.log("HIT");
             }
         } else if (order) {
@@ -182,7 +183,7 @@ export class Infantry {
     }
 }
 class Sword {
-    SPEED = 2500;
+    SPEED = 1500;
     RANGE = 120;
     
     constructor() {
@@ -199,17 +200,21 @@ class AttackAnimation {
     #timePassed;
 
     constructor(weapon, target, callback) {
+        this.#timePassed = 0;
         this.#weapon = weapon;
         this.#target = target;
-        this.#timePassed = 0;
     }
 
-    set timePassed(duration) {
-        this.#timePassed += duration;
+    get timePassed() {
+        return this.#timePassed;
+    }
+
+    set timePassed(timePassed) {
+        this.#timePassed = timePassed;
     }
 
     isFinished = () => {
-        return this.#weapon.SPEED/1000 <= this.#timePassed;
+        return this.#weapon.SPEED <= this.#timePassed;
     }
 
 }
